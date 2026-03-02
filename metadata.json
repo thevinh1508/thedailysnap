@@ -1,0 +1,5 @@
+{
+  "name": "The Daily Snap",
+  "description": "A vintage newsroom-style photo booth for capturing timeless moments.",
+  "requestFramePermissions": ["camera"]
+}
