@@ -1,5 +1,5 @@
 export async function removeBackground(base64Image: string): Promise<string> {
-  const apiKey = '3a042e24a46a5385447af5b072d09af1a219a1c49f3d25350bb63ca49ff634fe051a3927eb4782d1883672f9bd16e5b8';
+  const apiKey = import.meta.env.VITE_CLIPDROP_API_KEY;
 
   // Convert base64 to blob
   const res = await fetch(base64Image);
@@ -152,5 +152,70 @@ export async function overlayForeground(baseImageBase64: string, fgPath: string)
     fgImg.onerror = () => reject(new Error("Failed to load foreground image"));
 
     baseImg.src = baseImageBase64;
+  });
+}
+export async function generateTraditionalStrip(photos: string[], layout: '1x4' | '2x2'): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const canvas = document.createElement('canvas');
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return reject(new Error("Canvas context failed"));
+
+    // Typical photobooth strip dimensions (e.g., 1200x3600 for 1x4)
+    if (layout === '1x4') {
+      canvas.width = 1200;
+      canvas.height = 4000; // Extra space for branding
+    } else {
+      canvas.width = 2400;
+      canvas.height = 2400;
+    }
+
+    ctx.fillStyle = '#FFFFFF';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+    const imagesLoaded = Promise.all(photos.map(src => {
+      return new Promise<HTMLImageElement>((res, rej) => {
+        const img = new Image();
+        img.onload = () => res(img);
+        img.onerror = rej;
+        img.src = src;
+      });
+    }));
+
+    imagesLoaded.then(imgs => {
+      const padding = 60;
+      const gap = 40;
+
+      if (layout === '1x4') {
+        const slotWidth = canvas.width - (padding * 2);
+        const slotHeight = (canvas.height - (padding * 2) - (gap * 4)) / 4.5; // Leave room for bottom
+
+        imgs.forEach((img, i) => {
+          const y = padding + (i * (slotHeight + gap));
+          // Draw image grayscale/contrast for traditional feel?
+          ctx.drawImage(img, padding, y, slotWidth, slotHeight);
+        });
+
+        // Branding
+        ctx.fillStyle = '#1a1a1a';
+        ctx.font = 'italic 80px serif';
+        ctx.textAlign = 'center';
+        ctx.fillText('The Daily Snap', canvas.width / 2, canvas.height - 150);
+        ctx.font = '40px monospace';
+        ctx.fillText('© 1924 ARCHIVAL NEWS', canvas.width / 2, canvas.height - 80);
+      } else {
+        const slotWidth = (canvas.width - (padding * 2) - gap) / 2;
+        const slotHeight = (canvas.height - (padding * 2) - gap) / 2;
+
+        imgs.forEach((img, i) => {
+          const row = Math.floor(i / 2);
+          const col = i % 2;
+          const x = padding + (col * (slotWidth + gap));
+          const y = padding + (row * (slotHeight + gap));
+          ctx.drawImage(img, x, y, slotWidth, slotHeight);
+        });
+      }
+
+      resolve(canvas.toDataURL('image/png'));
+    }).catch(reject);
   });
 }

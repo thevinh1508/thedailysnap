@@ -38,3 +38,19 @@
   opacity: 0.1;
   pointer-events: none;
 }
+.subtle-scrollbar::-webkit-scrollbar {
+  width: 4px;
+}
+
+.subtle-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.subtle-scrollbar::-webkit-scrollbar-thumb {
+  background: rgba(26, 26, 26, 0.1);
+  border-radius: 10px;
+}
+
+.subtle-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: rgba(26, 26, 26, 0.2);
+}
